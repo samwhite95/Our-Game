@@ -17,7 +17,8 @@ public class cameraController : MonoBehaviour {
 
         newPos = player.transform.position;
         newPos[2] = -10;
-        if(newPos[1] < -1) { newPos[1] = -1; }
+        if(newPos[1] < 2) { newPos[1] = 2; }
+        if(newPos[0] < 5) { newPos[0] = 5; }
         transform.position = newPos;
         
 

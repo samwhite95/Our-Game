@@ -57,7 +57,7 @@ Rigidbody2D:
   m_Mass: 5
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 3
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
@@ -99,9 +99,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bea5504f8d89ab9468fbd8904410be59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
-  jumpMod: 35
-  ground: 1
+  speed: 2
+  jumpMod: 75
+  ground: 0
+  airSpeed: 1
 --- !u!212 &212198418446410292
 SpriteRenderer:
   m_ObjectHideFlags: 1
