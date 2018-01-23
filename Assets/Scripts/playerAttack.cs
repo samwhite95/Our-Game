@@ -40,7 +40,7 @@ public class playerAttack : MonoBehaviour {
     {
         startPos = transform.parent.localPosition;
         endPos = new Vector2(transform.parent.localPosition.x + offset, transform.parent.localPosition.y);
-        if (Input.GetButtonDown("Fire1") && !isAttacking)
+        if (Input.GetButtonDown("Fire1") && !isAttacking && !GetComponentInParent<playerController>().inGroundPound)
         {
             isAttacking = true;
             timeStart = Time.time;
