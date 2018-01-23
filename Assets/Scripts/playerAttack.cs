@@ -14,12 +14,15 @@ public class playerAttack : MonoBehaviour {
     bool goingIn; //weapon moving back in
     float offset; //2 for right, -2 for left
     Vector2 defaultScale;
+    Collider2D col;
 
 	// Use this for initialization
 	void Start () {
         startPos = transform.position;
         endPos = new Vector2(transform.position.x + 2, transform.position.y);
         defaultScale = gameObject.transform.localScale;
+        col = GetComponent<Collider2D>();
+        col.enabled = false;
 	}
 	
 	// Update is called once per frame
@@ -33,6 +36,7 @@ public class playerAttack : MonoBehaviour {
             offset = -2;
         }
         attackAction();
+        if(isAttacking) { col.enabled = true; };
 
 	}
 
@@ -69,6 +73,7 @@ public class playerAttack : MonoBehaviour {
                 {
                     goingIn = false;
                     isAttacking = false;
+                    col.enabled = false;
                     transform.GetChild(0).gameObject.SetActive(false);
                     percent = 0;
 

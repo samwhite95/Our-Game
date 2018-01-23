@@ -770,7 +770,7 @@ Prefab:
     - target: {fileID: 114749018764787528, guid: 1258b3e10e0f74b4ca104e54ddea9338,
         type: 2}
       propertyPath: jumpMod
-      value: 90
+      value: 95
       objectReference: {fileID: 0}
     - target: {fileID: 114749018764787528, guid: 1258b3e10e0f74b4ca104e54ddea9338,
         type: 2}
@@ -781,6 +781,11 @@ Prefab:
         type: 2}
       propertyPath: groundPoundSpeed
       value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 114749018764787528, guid: 1258b3e10e0f74b4ca104e54ddea9338,
+        type: 2}
+      propertyPath: dashSpeed
+      value: 100
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1258b3e10e0f74b4ca104e54ddea9338, type: 2}
@@ -1545,7 +1550,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 4891549310613954, guid: 15f43954138ba8d4d84025bee1a61191, type: 2}
       propertyPath: m_LocalPosition.x
-      value: 19.042
+      value: 19.1
       objectReference: {fileID: 0}
     - target: {fileID: 4891549310613954, guid: 15f43954138ba8d4d84025bee1a61191, type: 2}
       propertyPath: m_LocalPosition.y

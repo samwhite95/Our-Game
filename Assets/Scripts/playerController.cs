@@ -19,11 +19,15 @@ public class playerController : MonoBehaviour {
     public float groundFriction;
     public float playv;
     public float groundPoundSpeed;
+    public float dashSpeed;
+
 
     float distToGround;
     float distToSides;
     public int wallTouch; // 0 no wall, 1 left, 2 right
     public bool inGroundPound;
+    bool canDash = true;
+    bool inDash;
 
     // Use this for initialization
     void Start () {
@@ -38,17 +42,49 @@ public class playerController : MonoBehaviour {
 	void Update () {
         wallTouch = isTouchingWall();
         playv = rb2d.velocity.x;
-        groundPound();
-        if (!inGroundPound)
+        if(!inGroundPound) { StartCoroutine(dash()); }
+        if (!inDash)
         {
-            flipOrientation();
-            playerMovement();
+            groundPound();
+            if (!inGroundPound)
+            {
+                flipOrientation();
+                playerMovement();
+            }
         }
         if(isGrounded()) { canDoubleJump = true; inGroundPound = false; }
         //facingRight();
 
 
 	}
+
+    void SpawnTrail()
+    {
+        GameObject trailPart = new GameObject();
+        SpriteRenderer trailPartRenderer = trailPart.AddComponent<SpriteRenderer>();
+        trailPartRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
+        Color color = trailPartRenderer.color;
+        color.a = 0.5f; // replace 0.5f with needed alpha decrement
+        trailPartRenderer.color = color;
+        trailPart.transform.position = transform.position;
+        trailPart.transform.localScale = transform.localScale;
+        Destroy(trailPart, 0.5f); // replace 0.5f with needed lifeTime
+
+        StartCoroutine("FadeTrailPart", trailPartRenderer);
+    }
+
+    IEnumerator FadeTrailPart(SpriteRenderer trailPartRenderer)
+    {
+        while (trailPartRenderer != null)
+        {
+            Color color = trailPartRenderer.color;
+            color.a -= 0.05f; // replace 0.5f with needed alpha decrement
+            trailPartRenderer.color = color;
+            yield return new WaitForEndOfFrame();
+        }
+
+        
+    }
 
     void groundPound()
     {
@@ -60,6 +96,43 @@ public class playerController : MonoBehaviour {
             rb2d.AddForce(Vector2.down * groundPoundSpeed, ForceMode2D.Impulse);
         }
     }
+
+    IEnumerator dash()
+    {
+        if (Input.GetButtonDown("Dash") && canDash)
+            {
+            InvokeRepeating("SpawnTrail", 0, 0.01f); // replace 0.2f with needed repeatRate
+            canDash = false;
+            inDash = true;
+            resetVelocity();
+            float grav = rb2d.gravityScale;
+            rb2d.gravityScale = 0;
+            if (!facingRight())
+            {
+                rb2d.AddForce(Vector3.left * dashSpeed, ForceMode2D.Impulse);
+            }
+            else
+            {
+                rb2d.AddForce(Vector3.right * dashSpeed, ForceMode2D.Impulse);
+            }
+            yield return new WaitForSeconds(0.4f);
+            resetVelocity();
+            rb2d.gravityScale = grav;
+            inDash = false;
+            CancelInvoke("SpawnTrail");
+            yield return new WaitForSeconds(1.6f);
+            canDash = true;
+        }
+        
+    }
+
+    void resetVelocity()
+    {
+        Vector2 resetVelocity = new Vector2(0, 0);
+        rb2d.velocity = resetVelocity;
+
+    }
+
 
     void playerMovement()
     {
