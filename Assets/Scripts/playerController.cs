@@ -20,14 +20,22 @@ public class playerController : MonoBehaviour {
     public float playv;
     public float groundPoundSpeed;
     public float dashSpeed;
+    public float glideScale;
+    public Vector2 safePos;
+    public bool canTakeDamage = true;
+    public Vector2 test1;
+    public Vector2 test2;
 
-
+    float grav;
     float distToGround;
     float distToSides;
     public int wallTouch; // 0 no wall, 1 left, 2 right
     public bool inGroundPound;
     bool canDash = true;
     bool inDash;
+    bool canGlide;
+    bool safeGround;
+    
 
     // Use this for initialization
     void Start () {
@@ -36,13 +44,16 @@ public class playerController : MonoBehaviour {
         distToSides = GetComponent<Collider2D>().bounds.extents.x;
         col = GetComponent<Collider2D>();
         defaultScale = transform.localScale;
+        grav = rb2d.gravityScale;
     }
 	
 	// Update is called once per frame
 	void Update () {
         wallTouch = isTouchingWall();
+        setLastSafePos();
+        ground = isGrounded();
         playv = rb2d.velocity.x;
-        if(!inGroundPound) { StartCoroutine(dash()); }
+        if(!inGroundPound) { StartCoroutine(dash()); glide(); }
         if (!inDash)
         {
             groundPound();
@@ -52,7 +63,7 @@ public class playerController : MonoBehaviour {
                 playerMovement();
             }
         }
-        if(isGrounded()) { canDoubleJump = true; inGroundPound = false; }
+        if(isGrounded()) { canDoubleJump = true; inGroundPound = false; canGlide = false; }
         //facingRight();
 
 
@@ -105,21 +116,24 @@ public class playerController : MonoBehaviour {
             canDash = false;
             inDash = true;
             resetVelocity();
-            float grav = rb2d.gravityScale;
             rb2d.gravityScale = 0;
+            canTakeDamage = false;
             if (!facingRight())
             {
-                rb2d.AddForce(Vector3.left * dashSpeed, ForceMode2D.Impulse);
+                rb2d.AddForce(Vector2.left * dashSpeed, ForceMode2D.Impulse);
+                
             }
             else
             {
-                rb2d.AddForce(Vector3.right * dashSpeed, ForceMode2D.Impulse);
+                rb2d.AddForce(Vector2.right * dashSpeed, ForceMode2D.Impulse);
+                
             }
             yield return new WaitForSeconds(0.4f);
             resetVelocity();
             rb2d.gravityScale = grav;
             inDash = false;
             CancelInvoke("SpawnTrail");
+            canTakeDamage = true;
             yield return new WaitForSeconds(1.6f);
             canDash = true;
         }
@@ -141,7 +155,16 @@ public class playerController : MonoBehaviour {
         Vector2 movement = new Vector2(moveHoriz * speed, 0);
         if(!isGrounded())
         {
+            
             movement.x = airSpeed * moveHoriz;
+            if(rb2d.velocity.x > 8 && movement.x > 0)
+            {
+                movement.x = 0;
+            }
+            if (rb2d.velocity.x < -8 && movement.x < 0)
+            {
+                movement.x = 0;
+            }
         }
         velocity = new Vector2(0, 0);
         velocity.y = rb2d.velocity.y;
@@ -162,24 +185,26 @@ public class playerController : MonoBehaviour {
         }
         if(Input.GetButtonDown("Jump") && !isGrounded() && wallTouch != 0)
         {
-            Vector2 resetVelocity = new Vector2(0, 0);
-            rb2d.velocity = resetVelocity;
+            resetVelocity();
             if(wallTouch == 1)
             {
-                Vector2 upAndRight = new Vector2(Vector2.right.x, Vector2.up.y * 1.5f);
+                Vector2 upAndRight = new Vector2(Vector2.right.x, Vector2.up.y * 1.2f);
                 rb2d.AddForce(upAndRight * wallJumpMod, ForceMode2D.Impulse);
+                test1 = upAndRight * wallJumpMod;
             }
             if (wallTouch == 2)
             {
-                Vector2 upAndLeft = new Vector2(Vector2.left.x, Vector2.up.y * 1.5f);
+                Vector2 upAndLeft = new Vector2(Vector2.left.x, Vector2.up.y * 1.2f);
                 rb2d.AddForce(upAndLeft * wallJumpMod, ForceMode2D.Impulse);
+                test2 = upAndLeft * wallJumpMod;
             }
         }
     }
 
     void velocityCap()
     {
-        
+        if (isGrounded())
+        {
             if (rb2d.velocity.x > speed && facingRight())
             {
                 velocity.x = speed;
@@ -193,6 +218,7 @@ public class playerController : MonoBehaviour {
                 velocity.y = rb2d.velocity.y;
                 rb2d.velocity = velocity;
             }
+        }
         
 
         
@@ -202,9 +228,24 @@ public class playerController : MonoBehaviour {
     {
         canDoubleJump = false;
         yield return new WaitForSeconds(jumpDelay);
+        canGlide = true;
         velocity = new Vector2(rb2d.velocity.x, 0);
         rb2d.velocity = velocity;
         rb2d.AddForce(Vector2.up * jumpMod * 1.5f, ForceMode2D.Impulse);
+        
+    }
+
+    void setLastSafePos()
+    {
+        if(safePos == null)
+        {
+            safePos = rb2d.position;
+        }
+        if(isGrounded() && isGroundSafe())
+        {
+            safePos = rb2d.position;
+            
+        }
         
     }
 
@@ -215,6 +256,21 @@ public class playerController : MonoBehaviour {
         bool ray1 = Physics2D.Raycast(bottomLeft, Vector2.down, distToGround + 0.1f);
         bool ray2 = Physics2D.Raycast(bottomRight, Vector2.down, distToGround + 0.1f);
         if(ray1 || ray2) { return true; }
+        else { return false; }
+    }
+
+    bool isGroundSafe()
+    {
+        Vector2 bottomLeft = new Vector2(col.bounds.center.x - col.bounds.extents.x, transform.position.y);
+        Vector2 bottomRight = new Vector2(col.bounds.center.x + col.bounds.extents.x, transform.position.y);
+        RaycastHit2D ray1 = Physics2D.Raycast(bottomLeft, Vector2.down, distToGround + 0.1f);
+        RaycastHit2D ray2 = Physics2D.Raycast(bottomRight, Vector2.down, distToGround + 0.1f);
+        if(ray1 && ray1.collider.gameObject.tag == "ground")
+        { return true; }
+        if (ray2 && ray2.collider.gameObject.tag == "ground")
+        {
+            return true;
+        }
         else { return false; }
     }
 
@@ -286,6 +342,22 @@ public class playerController : MonoBehaviour {
         else
         {
             return 0;
+        }
+
+    }
+
+    void glide()
+    {
+        if(!isGrounded() && !canDoubleJump && Input.GetButton("Jump") && !inDash && rb2d.velocity.y < 0 && canGlide)
+        {
+            rb2d.gravityScale = glideScale;
+        }
+        else
+        {
+            if (!inDash)
+            {
+                rb2d.gravityScale = grav;
+            }
         }
 
     }
